@@ -1,0 +1,74 @@
+# This Dockerfile attempts to install dependencies, run the tests and build the pocket-core binary
+# The result of this Dockerfile will put the pocket-core executable in the $GOBIN/bin, which in turn
+# is part of the $PATH
+
+# Dynamically pull Go-lang version for the image
+ARG GOLANG_IMAGE_VERSION=golang:1.18.0-alpine3.15
+
+# First build step to build the app binary
+FROM ${GOLANG_IMAGE_VERSION} AS builder
+
+# Install dependencies
+RUN apk -v --update --no-cache add \
+	curl \
+	git \
+	groff \
+	less \
+	mailcap \
+	gcc \
+    openssh \
+	libc-dev \
+	bash  \
+	leveldb-dev && \
+	rm /var/cache/apk/* || true
+
+# Environment and system dependencies setup
+ENV POCKET_PATH=/go/src/github.com/pokt-network/pocket-core/
+ENV GO111MODULE="on"
+
+# Create node root directory
+RUN mkdir -p ${POCKET_PATH} ~/.ssh/
+RUN ssh-keyscan -t rsa github.com >> ~/.ssh/known_hosts
+WORKDIR $POCKET_PATH
+
+# Creating the BRANCH_NAME variable
+ARG BRANCH_NAME="${BRANCH_NAME}"
+ARG COMMIT="$COMMIT"
+ARG REPO="$REPO"
+# Copying deps sh to tmp folder
+COPY deps.sh /tmp/
+RUN echo "Building from $REPO branch: $BRANCH_NAME"
+COPY key /tmp/key
+# Clone the repository
+RUN cp /tmp/key ~/.ssh/id_rsa && chmod 400 ~/.ssh/id_rsa && eval `ssh-agent` && ssh-add ~/.ssh/id_rsa && git clone --branch ${BRANCH_NAME} ${REPO} ${POCKET_PATH} && cd ${POCKET_PATH} 
+
+#RUN cp /tmp/key ~/.ssh/id_rsa && chmod 400 ~/.ssh/id_rsa && eval `ssh-agent` && ssh-add ~/.ssh/id_rsa && git clone --branch ${BRANCH_NAME} ${REPO} ${POCKET_PATH} && cd ${POCKET_PATH} && echo "${COMMIT}" && git checkout ${COMMIT} && echo "USING COMMIT" && git rev-parse HEAD 
+
+# Install rest of source code
+COPY . .
+
+# Run tests
+# As the tests were removed recently for the fact that most of them were broken, I commented this line,
+# It should be uncommented as soon as the new tests are available
+RUN pwd
+RUN ls
+#RUN go test -short -v -p 1 ./...
+
+# Install project dependencies and builds the binary
+RUN go mod tidy && go build -tags cleveldb -o /bin/pocket ./app/cmd/pocket_core/main.go
+
+# Second build step: reduce image size to only use app binary
+FROM alpine:3.15
+
+COPY --from=builder /bin/pocket /bin/pocket
+COPY entrypoint.sh /tmp/
+RUN apk add --update --no-cache expect bash leveldb-dev
+RUN apk add --no-cache tzdata && cp /usr/share/zoneinfo/America/New_York  /etc/localtime
+# Create app user and add permissions
+RUN addgroup --gid 1001 -S app \
+	&& adduser --uid 1005 -S -G app app
+RUN mv /tmp/entrypoint.sh /home/app/ && chown -R app /bin/pocket  && mkdir -p /home/app/.pocket/config && chown -R app /home/app/.pocket
+
+USER app
+
+ENTRYPOINT ["/usr/bin/expect", "/home/app/entrypoint.sh"]
