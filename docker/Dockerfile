@@ -40,7 +40,9 @@ COPY deps.sh /tmp/
 RUN echo "Building from $REPO branch: $BRANCH_NAME"
 COPY key /tmp/key
 # Clone the repository
-RUN cp /tmp/key ~/.ssh/id_rsa && chmod 400 ~/.ssh/id_rsa && eval `ssh-agent` && ssh-add ~/.ssh/id_rsa && git clone --branch ${BRANCH_NAME} ${REPO} ${POCKET_PATH} && cd ${POCKET_PATH} 
+RUN echo "Cloning repo"
+RUN cp /tmp/key ~/.ssh/id_rsa && chmod 400 ~/.ssh/id_rsa && eval `ssh-agent` && ssh-add ~/.ssh/id_rsa && git clone --branch ${BRANCH_NAME} ${REPO} ${POCKET_PATH} && cd ${POCKET_PATH} && git log -n 1 ${BRANCH_NAME} 
+ 
 
 #RUN cp /tmp/key ~/.ssh/id_rsa && chmod 400 ~/.ssh/id_rsa && eval `ssh-agent` && ssh-add ~/.ssh/id_rsa && git clone --branch ${BRANCH_NAME} ${REPO} ${POCKET_PATH} && cd ${POCKET_PATH} && echo "${COMMIT}" && git checkout ${COMMIT} && echo "USING COMMIT" && git rev-parse HEAD 
 
