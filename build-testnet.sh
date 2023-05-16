@@ -17,6 +17,11 @@ yes | sudo docker system prune
 yes | sudo docker container prune
 yes | sudo docker volume prune
 
+
+#TODO: Correctly fix the build of the second image
+#TODO: Optimize image size by just leaving tendermint files and pocket binary
+#TODO: Download go.mod.core and go.mod.tendermint from repo instead of just copying it
+
 echo "----- Buliding pocket image -----"
 cd ./docker
 sudo docker build -f Dockerfile.testnet --no-cache -t nodefleet/$DOCKER_REPO:$IMAGE_NAME --build-arg BRANCH_NAME=$BRANCH_NAME --build-arg REPO=$REPO --build-arg COMMIT=$COMMIT  --build-arg TENDERMINT_BRANCH_NAME=$TENDERMINT_BRANCH_NAME --build-arg TENDERMINT_REPO=$TENDERMINT_REPO .
