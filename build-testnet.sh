@@ -1,5 +1,5 @@
-export BRANCH_NAME="update_tendermint"
-export IMAGE_NAME="update_tendermint"
+export BRANCH_NAME="BETA-0.10.1"
+export IMAGE_NAME="BETA-0.10.1"
 export DOCKER_REPO="pocket-core-testnet"
 export DOCKER_REPO_="pocket-testnet"
 
