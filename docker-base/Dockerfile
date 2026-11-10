@@ -15,7 +15,7 @@ ARG DOCKER_FULL_REPO="nodefleet/${DOCKER_REPO}:${BRANCH_NAME}"
 FROM ${DOCKER_FULL_REPO} as builder
 RUN echo "Building $DOCKER_TAG"
 # Second build step: reduce image size to only use app binary
-FROM alpine:3.15
+FROM alpine:3.23
 
 COPY --from=builder /bin/pocket /bin/pocket
 COPY entrypoint.sh entrypoint.sh
