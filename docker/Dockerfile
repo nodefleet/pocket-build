@@ -60,7 +60,7 @@ RUN ls
 RUN go mod tidy && go build -tags cleveldb -o /bin/pocket ./app/cmd/pocket_core/main.go
 
 # Second build step: reduce image size to only use app binary
-FROM alpine:3.15
+FROM alpine:3.23
 
 COPY --from=builder /bin/pocket /bin/pocket
 COPY entrypoint.sh /tmp/
